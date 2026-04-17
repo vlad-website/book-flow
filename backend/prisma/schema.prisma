@@ -40,5 +40,17 @@ model User {
   birthDate   DateTime
   phone       String
 
+  verificationTokens VerificationToken[]
+
   createdAt   DateTime @default(now())
+}
+
+model VerificationToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
 }
