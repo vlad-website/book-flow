@@ -13,6 +13,8 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
+    console.log(dto);
+    
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     const user = await this.prisma.user.create({
@@ -44,28 +46,28 @@ export class AuthService {
     return { message: 'Check your email' };
     }
 
-    async verifyEmail(token: string) {
-  const record = await this.prisma.verificationToken.findUnique({
-    where: { token },
-  });
+  async verifyEmail(token: string) {
+    const record = await this.prisma.verificationToken.findUnique({
+      where: { token },
+    });
 
-  if (!record) {
-    throw new Error('Invalid token');
+    if (!record) {
+      throw new Error('Invalid token');
+    }
+
+    if (record.expiresAt < new Date()) {
+      throw new Error('Token expired');
+    }
+
+    await this.prisma.user.update({
+      where: { id: record.userId },
+      data: { isVerified: true },
+    });
+
+    await this.prisma.verificationToken.delete({
+      where: { token },
+    });
+
+    return { message: 'Email verified' };
   }
-
-  if (record.expiresAt < new Date()) {
-    throw new Error('Token expired');
-  }
-
-  await this.prisma.user.update({
-    where: { id: record.userId },
-    data: { isVerified: true },
-  });
-
-  await this.prisma.verificationToken.delete({
-    where: { token },
-  });
-
-  return { message: 'Email verified' };
-}
 }

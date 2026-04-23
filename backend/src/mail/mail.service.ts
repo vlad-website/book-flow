@@ -4,11 +4,12 @@ import * as nodemailer from 'nodemailer';
 @Injectable()
 export class MailService {
   private transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: "sandbox.smtp.mailtrap.io",
+    port: 2525,
     auth: {
-      user: 'your@gmail.com',
-      pass: 'your_app_password',
-    },
+      user: "0ea4d9eca4f1f3",
+      pass: "2a1e588f41d061"
+    }
   });
 
   async sendVerificationEmail(email: string, token: string) {
