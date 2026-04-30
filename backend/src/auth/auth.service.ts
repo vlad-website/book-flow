@@ -4,12 +4,15 @@ import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
 import { randomBytes } from 'crypto';
 import { MailService } from '../mail/mail.service';
+import { JwtService } from '@nestjs/jwt';
+import { UnauthorizedException } from '@nestjs/common';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private mailService: MailService,
+    private jwtService: JwtService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -69,5 +72,32 @@ export class AuthService {
     });
 
     return { message: 'Email verified' };
+  }
+
+  async login(email: string, password: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.isVerified) {
+      throw new UnauthorizedException('Email not verified');
+    }
+
+    const token = this.jwtService.sign({
+      userId: user.id,
+      role: user.role,
+    });
+
+    return { access_token: token };
   }
 }
