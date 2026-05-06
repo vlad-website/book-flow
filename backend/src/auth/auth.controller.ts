@@ -4,6 +4,9 @@ import { RegisterDto } from './dto/register.dto';
 import { Get, Query } from '@nestjs/common';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from './jwt/jwt.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
+import { RolesGuard } from '../common/guards/roles.guard'
 
 @Controller('auth')
 export class AuthController {
@@ -24,9 +27,16 @@ export class AuthController {
     return this.authService.login(body.email, body.password);
   }
 
-  @Get('me')
-  @UseGuards(JwtAuthGuard)
-  getMe() {
-    return { message: 'You are authorized' };
+  @Get('me') 
+  @UseGuards(JwtAuthGuard) 
+  getMe(@CurrentUser() user: any) { 
+    return user; 
+  }
+
+  @Get('author-only')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('AUTHOR')
+  testAuthor() {
+    return { message: 'Only authors can see this' };
   }
 }
